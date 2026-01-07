@@ -28,12 +28,14 @@
             </td>
             <td class="col-md-2">
               <div *ngIf="!orders[i].markAsSent && !orders[i].sellerCanceled">
-                <button class="btn btn-primary my-1 btn-sm" (click)="markAsSent(order)">Mark as Sent</button>
+                <button class="btn btn-success my-1 btn-sm" (click)="markAsSent(order)">Accept & Ship</button>
                 <br>
                 <button class="btn btn-danger my-1 btn-sm" (click)="cancelOrder(order)">Cancel Order</button>
               </div>
               <p *ngIf="orders[i].sellerCanceled"><strong>You have cancled the order</strong></p>
-              <p *ngIf="orders[i].markAsSent"><strong><div *ngIf="!orders[i].sellerCanceled">Order is Completed</div></strong></p>
+              <p *ngIf="orders[i].markAsSent"><strong>
+                  <div *ngIf="!orders[i].sellerCanceled">Order is Completed</div>
+                </strong></p>
             </td>
 
           </tr>

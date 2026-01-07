@@ -1,0 +1,41 @@
+.footer {
+    background-color: #131921;
+    color: #ffffff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.text-muted-light {
+    color: #dddddd !important;
+}
+
+.footer-link {
+    color: #aeaeae;
+    text-decoration: none;
+    transition: color 0.2s ease-in-out;
+    display: inline-block;
+    margin-bottom: 5px;
+}
+
+.footer-link:hover {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+.social-link {
+    color: #ffffff;
+    font-size: 1.2rem;
+    transition: opacity 0.2s;
+}
+
+.social-link:hover {
+    opacity: 0.8;
+}
+
+h5 {
+    letter-spacing: 0.5px;
+    font-size: 1rem;
+}
+
+hr {
+    opacity: 0.2;
+}

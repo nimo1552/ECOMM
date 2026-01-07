@@ -52,53 +52,6 @@
             <label for="country" class="form-label">Country</label>
             <input type="text" name="country" [(ngModel)]="this.country" class="form-control" id="country" required>
         </div>
-        <!-- bank -->
-        <div class="mb-3">
-            <label for="bankName" class="form-label">Bank Name</label>
-            <input type="text" name="bankName" [(ngModel)]="this.bankName" class="form-control" id="bankName" required>
-        </div>
-        <div class="mb-3">
-            <label for="accountNumber" class="form-label">Account Number</label>
-            <input type="number" name="accountNumber" [(ngModel)]="this.accountNumber" class="form-control"
-                id="accountNumber" required>
-        </div>
-        <div class="mb-3">
-            <label for="ifscCode" class="form-label">IFSC Code</label>
-            <input type="text" name="ifscCode" [(ngModel)]="this.IFSC" class="form-control" id="ifscCode" required>
-        </div>
-        <div class="mb-3">
-            <label for="swiftCode" class="form-label">Swift Code</label>
-            <input type="text" name="swiftCode" [(ngModel)]="this.swiftCode" class="form-control" id="swiftCode"
-                required>
-        </div>
-
-        <!-- id proof -->
-        <div class="mb-3">
-            <strong for="idProof" class="form-label">ID Proof</strong>
-            <input type="file" name="idProof" class="form-control" id="idProof" [(ngModel)]="idProof"
-                (change)="onFileSelected($event)" required>
-        </div>
-        <img [src]="imageUrl" alt="Selected ID Proof" *ngIf="imageUrl" width="200">
-
-        <div class="mb-3">
-            <label for="category" class="form-label">Category</label>
-            <select name="category" [(ngModel)]="category" class="form-control" id="category" required
-                (change)="onCategoryChange()">
-                <option value="" disabled selected>Select category</option>
-                <option *ngFor="let item of allCategories" [value]="item.name">{{ item.name }}</option>
-            </select>
-        </div>
-
-        <div class="mb-3">
-            <label for="subcategory" class="form-label">Subcategory</label>
-            <select name="subcategory" [(ngModel)]="subCategory" class="form-control" id="subcategory" required>
-                <option value="" disabled selected>Select subcategory</option>
-                <option *ngFor="let subCategory of selectedCategory?.subcategories" [value]="subCategory">{{ subCategory
-                    }}</option>
-            </select>
-        </div>
-
-
         <div class="mb-3 form-check">
             <input type="checkbox" class="form-check-input" id="exampleCheck1" required>
             <label class="form-check-label" for="exampleCheck1">I agree to all terms and conditions</label>

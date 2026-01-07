@@ -18,27 +18,10 @@ export class SellerAuthSignupComponent {
   city!: string;
   state!: string;
   country!: string;
-  bankName!: string;
-  accountNumber!: string;
-  IFSC!: string;
-  swiftCode!: string;
-  category!: string;
-  subCategory!: string;
-  idProof!: File;
-  loginStatsus: string = 'attempting';
   serverError: string = '';
-  imageUrl!: string;
-  allCategories!: [Category];
-  selectedCategory: Category | undefined;
-
-  onCategoryChange(): void {
-    this.selectedCategory = this.allCategories.find(
-      (category) => category.name === this.category
-    );
-  }
+  loginStatsus: string = 'attempting';
 
   constructor(private http: HttpClient, private router: Router) {
-    this.fetchCategory();
   }
 
   sellerSignUp() {
@@ -53,13 +36,6 @@ export class SellerAuthSignupComponent {
     formData.append('city', this.city);
     formData.append('state', this.state);
     formData.append('country', this.country);
-    formData.append('bankName', this.bankName);
-    formData.append('accountNumber', this.accountNumber);
-    formData.append('IFSC', this.IFSC);
-    formData.append('swiftCode', this.swiftCode);
-    formData.append('category', this.category);
-    formData.append('subCategory', this.subCategory);
-    formData.append('idProof', this.idProof, this.idProof.name);
 
     this.http.post(url, formData, { observe: 'response' }).subscribe(
       (response: HttpResponse<any>) => {
@@ -91,45 +67,5 @@ export class SellerAuthSignupComponent {
     );
   }
 
-  fetchCategory() {
-    const url = Data.category;
 
-    console.log(url);
-
-    this.http.get(url, { observe: 'response' }).subscribe(
-      (response: HttpResponse<any>) => {
-        const jsonResponse = response.body;
-        const statusCode = response.status;
-
-        if (statusCode == 200) {
-          console.log('receved positive response');
-
-          console.log(jsonResponse);
-
-          this.allCategories = jsonResponse.map((data: any) => {
-            const category: Category = new Category();
-            category.name = data.name;
-            category.subcategories = data.subcategories;
-            category.image = data.image;
-            return category;
-          });
-
-          // this.sellerSignUp();
-        }
-      },
-      (error) => {}
-    );
-  }
-
-  onFileSelected(event: any) {
-    const file: File = event.target.files[0];
-    this.idProof = file;
-
-    const reader = new FileReader();
-    reader.onload = (e: any) => {
-      this.imageUrl = e.target.result;
-    };
-
-    reader.readAsDataURL(file);
-  }
 }

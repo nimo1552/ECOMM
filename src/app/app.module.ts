@@ -30,6 +30,7 @@ import { SellerProfileComponent } from './widgets/seller-profile/seller-profile.
 import { EditProductComponent } from './widgets/edit-product/edit-product.component';
 import { CheckoutProductComponent } from './widgets/checkout-product/checkout-product.component';
 import { OrdersComponent } from './widgets/orders/orders.component';
+import { FooterComponent } from './widgets/footer/footer.component';
 
 
 
@@ -61,6 +62,7 @@ import { OrdersComponent } from './widgets/orders/orders.component';
     EditProductComponent,
     CheckoutProductComponent,
     OrdersComponent,
+    FooterComponent,
   ],
   imports: [
     BrowserModule,

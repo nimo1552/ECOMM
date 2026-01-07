@@ -16,7 +16,16 @@ app.use(bodyParser.json());
 app.use(express.static('product_images'));
 app.use(express.static('category'));
 app.use(express.static('ecommerce-website-idproof-uploaded'));
-app.use(express.static(path.join(__dirname, "../dist/my-angular-app")));
+
+app.get('/', (req, res) => {
+    const dbStatus = mongoose.connection.readyState === 1 ? "connected" : "disconnected";
+    res.json({
+        status: "active",
+        database: dbStatus,
+        uptime: process.uptime(),
+        timestamp: new Date()
+    });
+});
 
 var authApiPath = "/api/auth/";
 var sellerApiPath = "/api/seller/";
@@ -46,13 +55,6 @@ const sellerSchema = new mongoose.Schema({
     city: String,
     state: String,
     country: String,
-    bankName: String,
-    accountNumber: String,
-    IFSC: String,
-    swiftCode: String,
-    category: String,
-    subCategory: String,
-    idProof: String,
     date: {
         type: Date,
         default: Date.now
@@ -214,10 +216,9 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-app.post(authApiPath + "seller-signup", upload.single('idProof'), async (req, res) => {
+app.post(authApiPath + "seller-signup", upload.none(), async (req, res) => {
 
-    idProof = req.file;
-    const { name, phone, email, password, town, city, state, country, bankName, accountNumber, IFSC, swiftCode, category, subCategory } = req.body;
+    const { name, phone, email, password, town, city, state, country } = req.body;
 
     async function checkEmailAlreadyUsed() {
 
@@ -244,14 +245,7 @@ app.post(authApiPath + "seller-signup", upload.single('idProof'), async (req, re
             town: town,
             city: city,
             state: state,
-            country: country,
-            bankName: bankName,
-            accountNumber: accountNumber,
-            IFSC: IFSC,
-            swiftCode: swiftCode,
-            category: category,
-            subCategory: subCategory,
-            idProof: idProof.filename,
+            country: country
         });
         async function doInsert() {
             await objSellerData.save().then(savedData => {
@@ -796,6 +790,76 @@ app.post("/api/fetch-user-data/", async (req, res) => {
 
 });
 
+app.get("/api/admin/users", async (req, res) => {
+    try {
+        const UserModel = mongoose.model('usersAuthCred', usersSchema);
+        const users = await UserModel.find({});
+        res.status(200).json(users);
+    } catch (error) {
+        res.status(500).json({ error: "Error fetching users" });
+    }
+});
+
+app.get("/api/admin/sellers", async (req, res) => {
+    try {
+        const SellerModel = mongoose.model('sellerAuthCred', sellerSchema);
+        const sellers = await SellerModel.find({});
+        res.status(200).json(sellers);
+    } catch (error) {
+        res.status(500).json({ error: "Error fetching sellers" });
+    }
+});
+
+app.get('/db', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dashboard.html'));
+});
+
+app.get("/api/admin/data/:collection", async (req, res) => {
+    const collectionName = req.params.collection;
+    try {
+        const collection = mongoose.connection.db.collection(collectionName);
+        const data = await collection.find({}).toArray();
+        res.status(200).json(data);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error fetching collection data" });
+    }
+});
+
+app.put("/api/admin/update/:collection/:id", async (req, res) => {
+    const collectionName = req.params.collection;
+    const id = req.params.id;
+    const updateData = req.body;
+
+    try {
+        const collection = mongoose.connection.db.collection(collectionName);
+        delete updateData._id; // Prevent updating the immutable _id
+
+        const result = await collection.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: updateData }
+        );
+        res.status(200).json(result);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error updating document" });
+    }
+});
+
+app.delete("/api/admin/delete/:collection/:id", async (req, res) => {
+    const collectionName = req.params.collection;
+    const id = req.params.id;
+
+    try {
+        const collection = mongoose.connection.db.collection(collectionName);
+        const result = await collection.deleteOne({ _id: new ObjectId(id) });
+        res.status(200).json(result);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error deleting document" });
+    }
+});
+
 app.get("/api/empty-cart/:userId", async (req, res) => {
     try {
         const userId = req.params.userId;
@@ -848,12 +912,13 @@ async function checkProductHasInStock(productId, quantity) {
 app.post("/api/place-order/", async (req, res) => {
     try {
         var message = "Order(s) placed successfully";
-        // let userId;
         const orderData = req.body;
         for (const order of orderData) {
             const newOrder = new OrderData(order);
             if (await checkProductHasInStock(newOrder.productId, newOrder.quantity)) {
                 await newOrder.save();
+                // Decrement stock
+                await ProductData.findByIdAndUpdate(newOrder.productId, { $inc: { stock: -newOrder.quantity } });
             } else {
                 message += `, expect for ${newOrder.productTitle} due to stock`
             }
@@ -929,21 +994,35 @@ app.post('/api/seller-product-mark-as-sent/:orderId', (req, res) => {
         });
 });
 
-app.post('/api/seller-cancel-order/:orderId', (req, res) => {
+app.post('/api/seller-cancel-order/:orderId', async (req, res) => {
     const orderId = req.params.orderId;
     console.log("cancel order id: " + orderId)
 
-    OrderData.findOneAndUpdate({ _id: new ObjectId(orderId) }, { sellerCanceled: true })
-        .then((order) => {
-            if (!order) {
-                return res.status(404).json({ message: 'Order not found' });
-            }
-            return res.status(200).json({ message: 'Order canceled' });
-        })
-        .catch((err) => {
-            console.error(err);
-            return res.status(500).json({ message: 'Failed to cancel order' });
-        });
+    try {
+        // Find order first to get product details
+        const order = await OrderData.findById(orderId);
+
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        if (order.sellerCanceled) {
+            return res.status(400).json({ message: 'Order already canceled' });
+        }
+
+        // Update Order Logic
+        order.sellerCanceled = true;
+        await order.save();
+
+        // Restore Stock Logic
+        await ProductData.findByIdAndUpdate(order.productId, { $inc: { stock: order.quantity } });
+
+        return res.status(200).json({ message: 'Order canceled and stock restored' });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Failed to cancel order' });
+    }
 });
 
 app.get('/api/count-orders-of-seller/:sellerId', async (req, res) => {
@@ -1060,10 +1139,6 @@ app.get('/api/fetch-seller-highest-sales/:sellerId', async (req, res) => {
 // ... (previous code)
 
 
-
-app.get("/", (req, res) => {
-    res.send("Hello, world!");
-});
 
 app.listen(port, () => {
     console.log(`Server listening on port ${port}`);

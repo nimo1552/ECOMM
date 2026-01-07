@@ -26,6 +26,8 @@ export class Data {
     static seller_sales_cost: string = Data.domain + "/api/seller-sales-cost/";
     static fetch_seller_recent_orders: string = Data.domain + "/api/fetch-recent-seller-orders/";
     static fetch_seller_highest_ordrs: string = Data.domain + "/api/fetch-seller-highest-sales/";
+    static update_user: string = Data.domain + "/api/auth/update-user";
+    static update_seller: string = Data.domain + "/api/auth/update-seller";
 
     // image path
     static product_image_path: string = Data.domain + '/product_images/';
